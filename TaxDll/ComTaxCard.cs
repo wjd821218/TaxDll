@@ -296,20 +296,6 @@ namespace TaxDll
                     _InvoiceRetInfo.sRetInfoTypeCode = MyTax.InfoTypeCode;
                     _InvoiceRetInfo.sRetInfoNumber = MyTax.InfoNumber;
                     _InvoiceRetInfo.sRetGoodsListFlag = MyTax.GoodsListFlag;
-
-                    MyTax.GoodsListFlag = 0;
-                    MyTax.InfoShowPrtDlg = iInfoShowPrtDlg;
-
-                    MyTax.PrintInv();
-
-                    if ((MyTax.RetCode != 5001) && MyTax.RetCode != 5011 && MyTax.RetCode != 5012 && MyTax.RetCode != 5013)
-                    { sRetMsg = MyTax.RetCode.ToString() + " 打印失败:其他原因！"; iResult = 1; return 1; }
-
-                    if (MyTax.RetCode == 5001) { sRetMsg = MyTax.RetCode.ToString() + " 未找到发票或清单"; iResult = 1; return 1; }
-                    if (MyTax.RetCode == 5011) { sRetMsg = MyTax.RetCode.ToString() + " 打印成功"; iResult = 0; }
-                    if (MyTax.RetCode == 5012) { sRetMsg = MyTax.RetCode.ToString() + " 未打印"; iResult = 0; return 1; }
-                    if (MyTax.RetCode == 5013) { sRetMsg = MyTax.RetCode.ToString() + " 打印失败"; iResult = 1; return 1; }
-
                 }
                 else
                 {
@@ -327,6 +313,64 @@ namespace TaxDll
 
             }
             return iResult;
+        }
+        private void InvPrint(Int32 iInfoNumber, string sInfoTypeCode,short iGoodsListFlag = 0, short iInfoShowPrtDlg = 1)
+        {
+            iResult = 0;
+
+            MyTax.InfoTypeCode = sInfoTypeCode;
+            MyTax.InfoNumber = iInfoNumber;
+            MyTax.GoodsListFlag = iGoodsListFlag;
+            MyTax.InfoShowPrtDlg = iInfoShowPrtDlg;
+
+            MyTax.PrintInv();
+
+            iResult = MyTax.RetCode;
+
+            if ((MyTax.RetCode != 5011) && (MyTax.RetCode != 5001) && (MyTax.RetCode != 5012) && (MyTax.RetCode != 5013))
+            { sRetMsg = MyTax.RetCode.ToString() + " 打印失败,其他原因！"; iResult = 1; }
+
+            if (MyTax.RetCode == 5001) { sRetMsg = MyTax.RetCode.ToString() + " 未找到发票或清单"; iResult = 1; }
+            if (MyTax.RetCode == 5011) { sRetMsg = MyTax.RetCode.ToString() + " 打印成功"; iResult = 0; }
+            if (MyTax.RetCode == 5012) { sRetMsg = MyTax.RetCode.ToString() + " 未打印"; iResult = 0; }
+            if (MyTax.RetCode == 5013) { sRetMsg = MyTax.RetCode.ToString() + " 打印失败"; iResult = 1; }
+
+        }
+        private int InvCancel(Int32 iInfoNumber, string sInfoTypeCode)
+        {
+            MyTax.InfoTypeCode = sInfoTypeCode;
+            MyTax.InfoNumber = iInfoNumber;
+
+            MyTax.CancelInv();
+            iResult = MyTax.RetCode;
+
+            if (iResult == 6001) { sRetMsg = MyTax.RetCode.ToString() + " 当月发票库未找到该发票"; iResult = 1; return 1; }
+            if (iResult == 6002) { sRetMsg = MyTax.RetCode.ToString() + " 该发票已作废"; iResult = 1; return 1; }
+            if (iResult == 6011) {sRetMsg = MyTax.RetCode.ToString() + " 作废成功"; return 1; }
+            if (iResult == 6012) { sRetMsg = MyTax.RetCode.ToString() + " 未作废"; iResult = 1; return 1; }
+            if (iResult == 6013) { sRetMsg = MyTax.RetCode.ToString() + " 作废失败"; iResult = 1; return 1; }
+
+            return 0;
+
+        }
+
+        private int InvCloseCard()
+        {
+            int iResult = 0;
+            string sResultMsg = "";
+
+            MyTax.CloseCard();
+
+            iResult = MyTax.RetCode;
+            sResultMsg = MyTax.RetMsg;
+
+            if (iResult != 9000)
+            {
+                iResult = 1;
+                sRetMsg = "金税卡关闭失败！" + sResultMsg;
+                return 1;
+            }
+            return 0;
         }
     }
     class Base64
